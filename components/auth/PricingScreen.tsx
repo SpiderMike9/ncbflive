@@ -153,9 +153,12 @@ export const PricingScreen: React.FC<PricingScreenProps> = ({ onSelectPlan }) =>
 
         </div>
 
-        <div className="text-center pt-8">
-            <p className="text-slate-500 text-sm">
+        <div className="text-center pt-8 pb-8">
+            <p className="text-slate-500 text-sm mb-4">
                 Already have a subscription? <button className="text-blue-500 hover:underline">Restore Purchase</button>
+            </p>
+            <p className="text-slate-600 text-xs">
+                Copyright Michael Jones 2025 All rights reserved
             </p>
         </div>
 

@@ -1,7 +1,8 @@
 
 export enum UserRole {
   AGENT = 'AGENT',
-  CLIENT = 'CLIENT'
+  CLIENT = 'CLIENT',
+  TRIAL_AGENT = 'TRIAL_AGENT'
 }
 
 export enum CaseStatus {
@@ -24,6 +25,15 @@ export interface Subscription {
   maxUsers: number;
 }
 
+export interface AddressRecord {
+  address: string;
+  lat?: number;
+  lng?: number;
+  dateAdded: string;
+  isCurrent: boolean;
+  source: 'Intake' | 'CheckIn' | 'SkipTrace';
+}
+
 export interface Client {
   id: string;
   name: string;
@@ -42,7 +52,8 @@ export interface Client {
   dlNumber?: string;
   bookingNumber?: string;
   secondaryPhone?: string;
-  address?: string;
+  address?: string; // Current Address
+  addressHistory?: AddressRecord[]; // Historical Addresses
   residencyDuration?: string;
   employer?: {
     name: string;

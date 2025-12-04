@@ -1,3 +1,4 @@
+
 import { GoogleGenAI } from "@google/genai";
 
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
@@ -6,16 +7,18 @@ export const generateLegalDoc = async (docType: string, clientName: string, coun
   try {
     const model = 'gemini-2.5-flash';
     const prompt = `
-      You are a legal assistant for a North Carolina Bail Bond Agency.
-      Draft a formal ${docType}.
+      You are a professional legal document drafter for a North Carolina Bail Bond Agency.
+      Your task is to draft a formal ${docType}.
       
       Details:
       - Client Name: ${clientName}
       - County: ${county}
-      - Additional Details: ${extraDetails}
+      - Additional Context: ${extraDetails}
       
-      Ensure the tone is professional, legally sound for NC, and formatted as a clear text document. 
-      Do not include markdown formatting like bolding, just plain text suitable for a textarea.
+      Tone & Style:
+      - Professional, authoritative, and legally precise for NC jurisdiction.
+      - Ensure clear structure and formatting (suitable for a text editor).
+      - Do not include markdown formatting (like bolding), just plain text.
     `;
 
     const response = await ai.models.generateContent({
@@ -30,17 +33,30 @@ export const generateLegalDoc = async (docType: string, clientName: string, coun
   }
 };
 
-export const askAgentAssistant = async (query: string) => {
+export interface AgentResponse {
+  text: string;
+  chunks: any[];
+}
+
+export const askAgentAssistant = async (query: string): Promise<AgentResponse> => {
   try {
     const model = 'gemini-2.5-flash';
+    // Using Google Search grounding for the "AI Agent" persona (Deep researcher)
     const response = await ai.models.generateContent({
       model: model,
-      contents: `You are an expert on North Carolina Bail Bond laws and agency operations. Answer the following agent query briefly and professionally: ${query}`,
+      contents: `You are a strategic AI Agent for a Bail Bond agency. Provide a detailed, researched answer to this query: ${query}. Focus on NC statutes, local court procedures, or competitive market analysis if asked.`,
+      config: {
+        tools: [{ googleSearch: {} }],
+      },
     });
-    return response.text;
+    
+    return {
+        text: response.text || "No response generated.",
+        chunks: response.candidates?.[0]?.groundingMetadata?.groundingChunks || []
+    };
   } catch (error) {
     console.error("Gemini API Error:", error);
-    return "I am currently unavailable. Please try again later.";
+    return { text: "I am currently unavailable. Please check your network or API key.", chunks: [] };
   }
 };
 

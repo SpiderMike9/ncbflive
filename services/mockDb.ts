@@ -1,5 +1,5 @@
 
-import { Client, CaseFile, CheckInLog, CaseStatus, SkipTraceLogEntry, AuthorityContact, CommunicationLogEntry, CaseDocument } from '../types';
+import { Client, CaseFile, CheckInLog, CaseStatus, SkipTraceLogEntry, AuthorityContact, CommunicationLogEntry, CaseDocument, UserRole } from '../types';
 
 // Seed Data
 let MOCK_CLIENTS: Client[] = [
@@ -18,6 +18,9 @@ let MOCK_CLIENTS: Client[] = [
     dob: '1995-04-12',
     bookingNumber: 'WAKE-23-999',
     address: '123 Maple St, Raleigh, NC',
+    addressHistory: [
+        { address: '123 Maple St, Raleigh, NC', dateAdded: '2023-01-15T10:00:00Z', isCurrent: true, source: 'Intake' }
+    ],
     vehicleInfo: {
       make: 'Honda',
       model: 'Accord',
@@ -46,7 +49,11 @@ let MOCK_CLIENTS: Client[] = [
     caseNumber: '23CR005678',
     photoUrl: 'https://picsum.photos/201',
     pin: '5678',
-    dob: '1988-11-23'
+    dob: '1988-11-23',
+    address: '456 Oak Blvd, Charlotte, NC',
+    addressHistory: [
+        { address: '456 Oak Blvd, Charlotte, NC', dateAdded: '2023-03-20T14:30:00Z', isCurrent: true, source: 'Intake' }
+    ]
   }
 ];
 
@@ -154,6 +161,16 @@ export const addCheckIn = (checkIn: CheckInLog) => {
 export const getClientById = (id: string) => MOCK_CLIENTS.find(c => c.id === id);
 
 export const createClient = (client: Client) => {
+  if (!client.addressHistory && client.address) {
+      client.addressHistory = [{
+          address: client.address,
+          dateAdded: new Date().toISOString(),
+          isCurrent: true,
+          source: 'Intake'
+      }];
+  } else if (!client.addressHistory) {
+      client.addressHistory = [];
+  }
   MOCK_CLIENTS.unshift(client);
   return client;
 };
@@ -190,7 +207,6 @@ export const getStats = () => {
   };
 };
 
-// Skip Trace Services
 export const getSkipTraceLogs = (clientId: string): SkipTraceLogEntry[] => {
   return MOCK_SKIPTRACE_LOGS.filter(l => l.clientId === clientId);
 };
@@ -199,20 +215,37 @@ export const addSkipTraceLog = (entry: SkipTraceLogEntry) => {
   MOCK_SKIPTRACE_LOGS.unshift(entry);
 };
 
-// Mock Authentication
-export const authenticateUser = (type: 'AGENT' | 'CLIENT', id: string, secret: string) => {
-  if (type === 'AGENT') {
+// --- AUTHENTICATION & USER MANAGEMENT ---
+
+export const registerTrialAgent = (firstName: string, lastName: string, email: string) => {
+  // Simulate creating a new Trial Agent in DB
+  const tempPassword = Math.random().toString(36).slice(-8); // Generate secure temp password
+  return {
+    id: email,
+    name: `${firstName} ${lastName}`,
+    email: email,
+    role: UserRole.TRIAL_AGENT,
+    tempPassword: tempPassword
+  };
+};
+
+export const authenticateUser = (type: UserRole | string, id: string, secret: string) => {
+  if (type === UserRole.AGENT || type === 'AGENT' || type === UserRole.TRIAL_AGENT) {
     // Standard Admin
     if (id === 'admin@ncbondflow.com' && secret === 'admin123') {
-        return { id: 'admin', name: 'Agent Smith', role: 'AGENT' };
+        return { id: 'admin', name: 'Agent Smith', role: UserRole.AGENT };
     }
-    // New Admin MichaelJones (Pricing Bypass)
+    // MichaelJones Bypass
     if (id === 'MichaelJones' && secret === 'MikeJones1') {
-        return { id: 'MichaelJones', name: 'Michael Jones', role: 'ADMIN' };
+        return { id: 'MichaelJones', name: 'Michael Jones', role: UserRole.AGENT };
+    }
+    // Simulate generic login if registered (Mock)
+    if (id.includes('@') && secret.length > 5) {
+       return { id: id, name: 'Trial User', role: UserRole.TRIAL_AGENT };
     }
     return null;
   } else {
-    // Check by Email OR Case Number (to support legacy/demo flow)
+    // Client Login
     const client = MOCK_CLIENTS.find(c => c.email === id || c.caseNumber === id || c.id === id);
     if (client && client.pin === secret) {
       return client;
