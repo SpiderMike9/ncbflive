@@ -9,17 +9,16 @@ interface LoginScreenProps {
   onLoginSuccess: (role: UserRole, userId?: string, userName?: string) => void;
 }
 
-type AuthView = 'signup' | 'login' | 'welcome';
+type AuthView = 'signup' | 'login' | 'welcome' | 'client-login';
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [view, setView] = useState<AuthView>('signup'); // Default to Sign-Up
-  const [roleMode, setRoleMode] = useState<UserRole>(UserRole.AGENT);
+  const [view, setView] = useState<AuthView>('signup'); // Default to Sign-Up Portal
   
   // Sign Up State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   
-  // Shared State
+  // Login/Shared State
   const [identifier, setIdentifier] = useState(''); // Email
   const [secret, setSecret] = useState(''); // Password or PIN
   const [rememberMe, setRememberMe] = useState(false);
@@ -74,6 +73,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setLoading(true);
     setError('');
 
+    // Determine role based on current view
+    const roleMode = view === 'client-login' ? UserRole.CLIENT : UserRole.AGENT;
+
     setTimeout(() => {
       const result = authenticateUser(roleMode, identifier, secret);
       if (result) {
@@ -96,7 +98,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4">
+    <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4 font-sans">
       <div className="w-full max-w-lg">
         
         {/* Brand Header */}
@@ -109,8 +111,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">NC BondFlow</h1>
             <p className="text-zinc-500 mt-2">Professional Bail Management & Compliance</p>
             
-            {/* System Status Indicator */}
-            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1 bg-white rounded-full border border-zinc-200 shadow-sm">
+            {/* System Status Indicator - Always Visible */}
+            <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-zinc-200 shadow-sm">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
@@ -122,41 +124,46 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
         {/* --- VIEW: WELCOME / ONBOARDING --- */}
         {view === 'welcome' && (
             <Card className="shadow-2xl border-0 animate-fadeIn border-t-4 border-t-teal-500">
-                <div className="text-center p-4">
+                <div className="text-center p-6">
                     <div className="w-16 h-16 bg-teal-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <svg className="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <h2 className="text-2xl font-bold text-zinc-900 mb-2">Account Created Successfully</h2>
-                    <p className="text-zinc-500 text-sm mb-6">Welcome to the future of bail management.</p>
+                    <h2 className="text-2xl font-bold text-zinc-900 mb-2">Welcome Aboard</h2>
+                    <p className="text-zinc-500 text-sm mb-6">Your trial agent profile has been provisioned.</p>
                     
                     <div className="bg-zinc-50 rounded-lg p-6 border border-zinc-200 text-left mb-6">
                         <p className="text-xs text-zinc-400 uppercase font-bold mb-1">Your Username</p>
-                        <p className="font-mono text-zinc-800 mb-4">{identifier}</p>
+                        <p className="font-mono text-zinc-800 mb-4 font-bold">{identifier}</p>
                         
                         <p className="text-xs text-zinc-400 uppercase font-bold mb-1">Temporary Password</p>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center bg-white p-2 rounded border border-zinc-200">
                             <p className="font-mono text-xl font-bold text-zinc-900 tracking-wider">{tempPassword}</p>
-                            <button onClick={() => navigator.clipboard.writeText(tempPassword)} className="text-teal-600 text-xs font-bold hover:underline">Copy</button>
+                            <button onClick={() => navigator.clipboard.writeText(tempPassword)} className="text-teal-600 text-xs font-bold hover:underline uppercase">Copy</button>
                         </div>
                     </div>
 
-                    <div className="bg-red-50 border border-red-100 rounded p-3 mb-6 flex gap-3 items-start text-left">
-                        <svg className="w-5 h-5 text-red-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
-                        <p className="text-xs text-red-700"><strong>Security Alert:</strong> For your protection, you must change this temporary password immediately upon your first login.</p>
+                    <div className="bg-orange-50 border border-orange-100 rounded p-3 mb-6 flex gap-3 items-start text-left">
+                        <svg className="w-5 h-5 text-orange-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                        <p className="text-xs text-orange-800 font-medium"><strong>Action Required:</strong> Please change this temporary password immediately upon your first dashboard access.</p>
                     </div>
 
-                    <Button fullWidth onClick={handleProceedToDashboard} className="h-12 text-base shadow-lg shadow-teal-500/20">
+                    <Button fullWidth onClick={handleProceedToDashboard} className="h-12 text-base shadow-lg shadow-teal-500/20 bg-teal-600 hover:bg-teal-700 text-white font-bold">
                         Enter Dashboard
                     </Button>
                 </div>
             </Card>
         )}
 
-        {/* --- VIEW: SIGN UP --- */}
+        {/* --- VIEW: AGENT SIGN UP (DEFAULT) --- */}
         {view === 'signup' && (
-             <Card className="shadow-xl border-0">
+             <Card className="shadow-xl border-0 border-t-4 border-t-teal-500">
                 <div className="px-6 py-8">
-                    <h2 className="text-xl font-bold text-zinc-900 mb-6">Create Agent Account</h2>
+                    <div className="flex justify-between items-center mb-6">
+                        <h2 className="text-xl font-bold text-zinc-900">Agent Sign-Up Portal</h2>
+                        <button onClick={() => setView('login')} className="text-sm text-teal-600 font-bold hover:underline">
+                            Existing Login
+                        </button>
+                    </div>
                     
                     <form onSubmit={handleSignUp} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
@@ -174,8 +181,8 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                             <input required type="email" className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-zinc-50 focus:bg-white" value={identifier} onChange={e => setIdentifier(e.target.value)} placeholder="agent@agency.com" />
                         </div>
 
-                        <Button fullWidth className="h-12 text-base shadow-lg shadow-teal-500/20 mt-2" disabled={loading}>
-                            {loading ? 'Creating Profile...' : 'Sign Up Free'}
+                        <Button fullWidth className="h-12 text-base font-bold shadow-lg shadow-teal-500/20 mt-2 bg-teal-600 hover:bg-teal-700" disabled={loading}>
+                            {loading ? 'Creating Profile...' : 'Start Free Trial'}
                         </Button>
                     </form>
 
@@ -185,7 +192,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         <div className="flex-1 border-t border-zinc-200"></div>
                     </div>
 
-                    <Button variant="google" fullWidth onClick={handleGoogleAuth} className="h-12 text-sm font-medium relative">
+                    <Button variant="google" fullWidth onClick={handleGoogleAuth} className="h-12 text-sm font-bold text-zinc-600 border-zinc-300 hover:bg-zinc-50 relative">
                         <svg className="w-5 h-5 absolute left-4" viewBox="0 0 24 24">
                             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                             <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -195,42 +202,34 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         Sign up with Google
                     </Button>
                     
-                    <p className="text-center mt-6 text-sm text-zinc-500">
-                        Already have an account? <button onClick={() => setView('login')} className="text-teal-600 font-bold hover:underline">Log In</button>
-                    </p>
+                    <div className="mt-8 pt-4 border-t border-zinc-100 text-center">
+                        <button onClick={() => setView('client-login')} className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2 mx-auto">
+                            Are you a Client? Access Client Portal
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+                        </button>
+                    </div>
                 </div>
              </Card>
         )}
 
-        {/* --- VIEW: LOGIN --- */}
+        {/* --- VIEW: AGENT LOGIN --- */}
         {view === 'login' && (
-            <Card className="shadow-xl border-0">
-                 {/* Role Toggle */}
-                <div className="flex border-b border-zinc-100 mb-6 bg-zinc-50/50">
-                    <button
-                        className={`flex-1 py-4 text-sm font-semibold transition-colors ${roleMode === UserRole.AGENT ? 'text-teal-600 border-b-2 border-teal-600 bg-white' : 'text-zinc-400 hover:text-zinc-600'}`}
-                        onClick={() => { setRoleMode(UserRole.AGENT); setError(''); }}
-                    >
-                        Agent Portal
-                    </button>
-                    <button
-                        className={`flex-1 py-4 text-sm font-semibold transition-colors ${roleMode === UserRole.CLIENT ? 'text-teal-600 border-b-2 border-teal-600 bg-white' : 'text-zinc-400 hover:text-zinc-600'}`}
-                        onClick={() => { setRoleMode(UserRole.CLIENT); setError(''); }}
-                    >
-                        Client Check-In
-                    </button>
-                </div>
+            <Card className="shadow-xl border-0 border-t-4 border-t-teal-500">
+                <div className="px-6 py-8 space-y-4">
+                     <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-xl font-bold text-zinc-900">Agent Login</h2>
+                        <button onClick={() => setView('signup')} className="text-sm text-teal-600 font-bold hover:underline">
+                            Create Account
+                        </button>
+                    </div>
 
-                <div className="px-6 pb-6 space-y-4">
                     <form onSubmit={handleLogin} className="space-y-4">
                         <div>
-                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">
-                            {roleMode === UserRole.AGENT ? 'Email' : 'Client Email'}
-                        </label>
+                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Email</label>
                         <input
                             type="text"
                             className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-zinc-50 focus:bg-white"
-                            placeholder={roleMode === UserRole.AGENT ? 'name@agency.com' : 'client@example.com'}
+                            placeholder="name@agency.com"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
                             required
@@ -238,20 +237,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         </div>
 
                         <div>
-                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">
-                            {roleMode === UserRole.AGENT ? 'Password' : 'PIN'}
-                        </label>
+                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Password</label>
                         <input
                             type="password"
                             className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-zinc-50 focus:bg-white"
-                            placeholder={roleMode === UserRole.AGENT ? '••••••••' : '••••'}
+                            placeholder="••••••••"
                             value={secret}
                             onChange={(e) => setSecret(e.target.value)}
                             required
                         />
                         </div>
 
-                        {/* Remember Me Checkbox */}
                         <div className="flex items-center gap-2">
                             <input 
                                 type="checkbox" 
@@ -270,16 +266,70 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         </div>
                         )}
 
-                        <Button fullWidth className="h-12 text-base shadow-lg shadow-teal-500/20" disabled={loading}>
-                        {loading ? 'Authenticating...' : (roleMode === UserRole.AGENT ? 'Access Dashboard' : 'Client Login')}
+                        <Button fullWidth className="h-12 text-base shadow-lg shadow-teal-500/20 bg-teal-600 hover:bg-teal-700 font-bold" disabled={loading}>
+                        {loading ? 'Authenticating...' : 'Access Dashboard'}
                         </Button>
                     </form>
                     
-                    {roleMode === UserRole.AGENT && (
-                        <p className="text-center mt-4 text-sm text-zinc-500">
-                            New here? <button onClick={() => setView('signup')} className="text-teal-600 font-bold hover:underline">Sign Up</button>
-                        </p>
-                    )}
+                    <div className="mt-6 pt-4 border-t border-zinc-100 text-center">
+                        <button onClick={() => setView('client-login')} className="text-sm text-slate-400 hover:text-slate-600 hover:underline">
+                            Go to Client Check-In
+                        </button>
+                    </div>
+                </div>
+            </Card>
+        )}
+
+        {/* --- VIEW: CLIENT LOGIN --- */}
+        {view === 'client-login' && (
+             <Card className="shadow-xl border-0 border-t-4 border-t-blue-500">
+                <div className="px-6 py-8 space-y-4">
+                     <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-xl font-bold text-zinc-900">Client Check-In</h2>
+                        <button onClick={() => setView('signup')} className="text-sm text-zinc-400 font-medium hover:text-teal-600">
+                            Agent Access
+                        </button>
+                    </div>
+                    <p className="text-sm text-zinc-500 mb-4">
+                        Please enter the email and PIN provided by your bondsman to complete your check-in.
+                    </p>
+
+                    <form onSubmit={handleLogin} className="space-y-4">
+                        <div>
+                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Client Email / Case #</label>
+                        <input
+                            type="text"
+                            className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-zinc-50 focus:bg-white"
+                            placeholder="client@example.com"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
+                            required
+                        />
+                        </div>
+
+                        <div>
+                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">PIN</label>
+                        <input
+                            type="password"
+                            className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-zinc-50 focus:bg-white"
+                            placeholder="••••"
+                            value={secret}
+                            onChange={(e) => setSecret(e.target.value)}
+                            required
+                        />
+                        </div>
+
+                        {error && (
+                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 border border-red-100">
+                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                            {error}
+                        </div>
+                        )}
+
+                        <Button fullWidth className="h-12 text-base shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 font-bold" disabled={loading}>
+                        {loading ? 'Verifying...' : 'Login to Check-In'}
+                        </Button>
+                    </form>
                 </div>
             </Card>
         )}

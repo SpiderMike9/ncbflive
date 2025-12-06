@@ -159,7 +159,7 @@ const App: React.FC = () => {
               
               <button 
                 onClick={handleLogout}
-                className="px-4 py-1.5 rounded-full text-xs font-medium bg-white border border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
+                className="px-4 py-1.5 rounded-full text-xs font-bold bg-white border border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
               >
                 Log Out
               </button>
@@ -212,7 +212,7 @@ const App: React.FC = () => {
                        <p className="text-sm text-zinc-500">Welcome back, {userName}</p>
                    </div>
                    <div className="text-right">
-                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">
+                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-200">
                            {subscription?.tier} Plan
                        </span>
                    </div>
@@ -357,7 +357,7 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="bg-white border-t border-zinc-200 py-6 mt-auto">
+      <footer className="bg-white border-t border-zinc-200 py-6 mt-auto print:hidden">
         <div className="max-w-7xl mx-auto px-4 text-center">
             <p className="text-zinc-400 text-xs">
               Copyright Michael Jones 2025 All rights reserved

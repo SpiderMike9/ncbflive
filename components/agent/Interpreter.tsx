@@ -175,9 +175,13 @@ export const Interpreter: React.FC<InterpreterProps> = ({ onBack, subscription }
             <div>
                 <h2 className="text-xl font-bold text-zinc-900">AI Interpreter</h2>
                 <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1 text-[10px] bg-teal-50 text-teal-700 px-2 py-0.5 rounded border border-teal-100 font-medium">
+                    <span className="flex items-center gap-1.5 text-[10px] bg-white text-teal-700 px-3 py-1 rounded-full border border-teal-200 font-bold shadow-sm">
                         <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M21.35 11.1h-9.17v2.73h6.51c-.33 3.81-3.5 5.44-6.5 5.44C8.36 19.27 5 16.25 5 12c0-4.1 3.2-7.27 7.2-7.27 3.09 0 4.9 1.97 4.9 1.97L19 4.72S16.56 2 12.1 2C6.42 2 2.03 6.8 2.03 12c0 5.05 4.13 10 10.22 10 5.35 0 9.25-3.67 9.25-9.09 0-1.15-.15-1.81-.15-1.81z"/></svg>
                         Google Workspace Synced
+                    </span>
+                    <span className="text-[10px] text-zinc-400 font-medium flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 bg-red-500 rounded-full animate-pulse"></span>
+                        Voice Input Active
                     </span>
                 </div>
             </div>
@@ -226,16 +230,22 @@ export const Interpreter: React.FC<InterpreterProps> = ({ onBack, subscription }
        <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-4 h-full min-h-0">
           
           {/* Client Side */}
-          <div className={`relative rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all ${activeSpeaker === 'Client' ? 'bg-teal-50 ring-4 ring-teal-200' : 'bg-zinc-50 border border-zinc-200'}`}>
-              <div className="absolute top-4 left-4 bg-white border border-zinc-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-zinc-500">
+          <div className={`relative rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all ${activeSpeaker === 'Client' ? 'bg-teal-50 ring-4 ring-teal-200 shadow-xl' : 'bg-zinc-50 border border-zinc-200'}`}>
+              <div className="absolute top-4 left-4 bg-white border border-zinc-200 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-zinc-500 shadow-sm">
                   Client (Español)
               </div>
               
               <div className="flex-1 flex items-center justify-center w-full">
                   {activeSpeaker === 'Client' ? (
-                      <div className="animate-pulse text-2xl font-medium text-teal-800">Listening...</div>
+                      <div className="animate-pulse text-2xl font-bold text-teal-800 flex flex-col items-center gap-2">
+                          <span className="text-4xl">🎙️</span>
+                          Escuchando...
+                      </div>
                   ) : (
-                      <div className="text-zinc-400 font-medium">Tap to speak Spanish</div>
+                      <div className="text-zinc-400 font-medium flex flex-col items-center gap-2">
+                          <span className="text-2xl opacity-50">🇪🇸</span>
+                          Tap to speak Spanish
+                      </div>
                   )}
               </div>
 
@@ -249,21 +259,27 @@ export const Interpreter: React.FC<InterpreterProps> = ({ onBack, subscription }
           </div>
 
           {/* Bondsman Side */}
-          <div className={`relative rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all ${activeSpeaker === 'Bondsman' ? 'bg-zinc-200 ring-4 ring-zinc-300' : 'bg-zinc-800 text-white'}`}>
-             <div className="absolute top-4 left-4 bg-black/20 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-white/80">
+          <div className={`relative rounded-2xl p-6 flex flex-col items-center justify-center text-center transition-all ${activeSpeaker === 'Bondsman' ? 'bg-zinc-800 ring-4 ring-zinc-400 shadow-xl' : 'bg-white border border-zinc-300'}`}>
+             <div className="absolute top-4 left-4 bg-zinc-900 border border-zinc-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider text-zinc-300 shadow-sm">
                   Bondsman (English)
               </div>
 
               <div className="flex-1 flex items-center justify-center w-full">
                   {activeSpeaker === 'Bondsman' ? (
-                      <div className="animate-pulse text-2xl font-medium text-zinc-900">Listening...</div>
+                      <div className="animate-pulse text-2xl font-bold text-white flex flex-col items-center gap-2">
+                          <span className="text-4xl">🎙️</span>
+                          Listening...
+                      </div>
                   ) : (
-                      <div className="text-zinc-400 font-medium">Tap to speak English</div>
+                      <div className="text-zinc-400 font-medium flex flex-col items-center gap-2">
+                          <span className="text-2xl opacity-50">🇺🇸</span>
+                          Tap to speak English
+                      </div>
                   )}
               </div>
 
               <button 
-                className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${activeSpeaker === 'Bondsman' ? 'bg-red-500 text-white animate-pulse' : 'bg-zinc-700 text-white hover:bg-zinc-600 border-4 border-zinc-600'} ${isCapReached ? 'opacity-50 cursor-not-allowed' : ''}`}
+                className={`w-24 h-24 rounded-full flex items-center justify-center shadow-lg transition-transform active:scale-95 ${activeSpeaker === 'Bondsman' ? 'bg-red-500 text-white animate-pulse' : 'bg-zinc-800 text-white hover:bg-zinc-700 border-4 border-zinc-700'} ${isCapReached ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={() => startListening('Bondsman')}
                 disabled={processing || (activeSpeaker !== null && activeSpeaker !== 'Bondsman') || isCapReached}
               >
