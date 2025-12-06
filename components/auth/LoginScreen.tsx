@@ -12,15 +12,15 @@ interface LoginScreenProps {
 type AuthView = 'signup' | 'login' | 'welcome' | 'client-login';
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
-  const [view, setView] = useState<AuthView>('signup'); // Default to Sign-Up Portal
+  const [view, setView] = useState<AuthView>('signup'); 
   
   // Sign Up State
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   
   // Login/Shared State
-  const [identifier, setIdentifier] = useState(''); // Email
-  const [secret, setSecret] = useState(''); // Password or PIN
+  const [identifier, setIdentifier] = useState(''); 
+  const [secret, setSecret] = useState(''); 
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,20 +29,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
   const [tempPassword, setTempPassword] = useState('');
 
   useEffect(() => {
-    // Check for saved user preference
+    // Check for saved user preference for AGENTS only
     const savedUser = localStorage.getItem('rememberedUser');
-    if (savedUser) {
+    if (savedUser && view !== 'client-login') {
         setIdentifier(savedUser);
         setRememberMe(true);
-        setView('login'); // If remembered, assume they want to login
+        setView('login');
     }
-  }, []);
+  }, [view]);
 
   const handleGoogleAuth = () => {
     setLoading(true);
     setTimeout(() => {
         if (view === 'signup') {
-            // Create Trial User via Google
             const newUser = registerTrialAgent('Google', 'User', 'google@example.com');
             setFirstName('Google');
             setLastName('User');
@@ -50,7 +49,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             setTempPassword(newUser.tempPassword);
             setView('welcome');
         } else {
-            // Login via Google
             onLoginSuccess(UserRole.AGENT, 'admin', 'Agent Smith');
         }
         setLoading(false);
@@ -68,16 +66,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     }, 1000);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleAgentLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
 
-    // Determine role based on current view
-    const roleMode = view === 'client-login' ? UserRole.CLIENT : UserRole.AGENT;
-
     setTimeout(() => {
-      const result = authenticateUser(roleMode, identifier, secret);
+      const result = authenticateUser(UserRole.AGENT, identifier, secret);
       if (result) {
         if (rememberMe) {
             localStorage.setItem('rememberedUser', identifier);
@@ -85,11 +80,30 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             localStorage.removeItem('rememberedUser');
         }
         const user = result as any;
-        onLoginSuccess(user.role || UserRole.AGENT, user.id, user.name);
+        onLoginSuccess(user.role, user.id, user.name);
       } else {
-        setError('Invalid credentials. Please try again.');
+        setError('Invalid agent credentials.');
       }
       setLoading(false);
+    }, 800);
+  };
+
+  const handleClientLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+
+    setTimeout(() => {
+        // STRICT: Only authenticate as Client role here
+        const result = authenticateUser(UserRole.CLIENT, identifier, secret);
+        if (result) {
+            const user = result as any;
+            // Force role to CLIENT just in case mockDb didn't return it
+            onLoginSuccess(UserRole.CLIENT, user.id, user.name); 
+        } else {
+            setError('Check-in failed. Invalid Username or PIN.');
+        }
+        setLoading(false);
     }, 800);
   };
 
@@ -97,6 +111,68 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
       onLoginSuccess(UserRole.TRIAL_AGENT, identifier, `${firstName} ${lastName}`);
   };
 
+  // --- VIEW: CLIENT CHECK-IN PORTAL (Isolated) ---
+  if (view === 'client-login') {
+      return (
+        <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 font-sans border-t-8 border-teal-600">
+            <div className="w-full max-w-sm">
+                <div className="text-center mb-8">
+                    <h1 className="text-2xl font-bold text-slate-800">Client Portal</h1>
+                    <p className="text-slate-500 text-sm">Secure Check-in System</p>
+                    <div className="mt-2 inline-flex items-center gap-2 px-3 py-1 bg-green-50 rounded-full border border-green-200">
+                        <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                        <span className="text-[10px] font-bold text-green-700 uppercase">System Active</span>
+                    </div>
+                </div>
+
+                <Card className="shadow-lg border-t-4 border-t-blue-500">
+                    <form onSubmit={handleClientLogin} className="space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Username / Email</label>
+                            <input
+                                type="text"
+                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="client_test_user"
+                                value={identifier}
+                                onChange={(e) => setIdentifier(e.target.value)}
+                                required
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Secure PIN</label>
+                            <input
+                                type="password"
+                                className="w-full p-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                                placeholder="••••"
+                                value={secret}
+                                onChange={(e) => setSecret(e.target.value)}
+                                required
+                            />
+                        </div>
+
+                        {error && (
+                            <div className="p-3 bg-red-50 text-red-600 text-sm rounded border border-red-100 text-center font-medium">
+                                {error}
+                            </div>
+                        )}
+
+                        <Button fullWidth className="bg-blue-600 hover:bg-blue-700 h-12 text-base font-bold shadow-blue-500/20" disabled={loading}>
+                            {loading ? 'Verifying...' : 'Check In Now'}
+                        </Button>
+                    </form>
+                    
+                    <div className="mt-6 text-center border-t border-slate-100 pt-4">
+                        <button onClick={() => { setView('login'); setIdentifier(''); setSecret(''); }} className="text-xs text-slate-400 hover:text-teal-600 font-medium">
+                            Agent / Bondsman Login
+                        </button>
+                    </div>
+                </Card>
+            </div>
+        </div>
+      );
+  }
+
+  // --- VIEW: AGENT / ADMIN PORTAL ---
   return (
     <div className="min-h-screen bg-zinc-50 flex flex-col items-center justify-center p-4 font-sans">
       <div className="w-full max-w-lg">
@@ -110,8 +186,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
             </div>
             <h1 className="text-3xl font-bold text-zinc-900 tracking-tight">NC BondFlow</h1>
             <p className="text-zinc-500 mt-2">Professional Bail Management & Compliance</p>
-            
-            {/* System Status Indicator - Always Visible */}
             <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-zinc-200 shadow-sm">
                 <span className="relative flex h-3 w-3">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
@@ -203,7 +277,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     </Button>
                     
                     <div className="mt-8 pt-4 border-t border-zinc-100 text-center">
-                        <button onClick={() => setView('client-login')} className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2 mx-auto">
+                        <button onClick={() => { setView('client-login'); setIdentifier(''); setSecret(''); }} className="text-sm font-medium text-slate-500 hover:text-slate-800 flex items-center justify-center gap-2 mx-auto">
                             Are you a Client? Access Client Portal
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
                         </button>
@@ -223,7 +297,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         </button>
                     </div>
 
-                    <form onSubmit={handleLogin} className="space-y-4">
+                    <form onSubmit={handleAgentLogin} className="space-y-4">
                         <div>
                         <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Email</label>
                         <input
@@ -272,64 +346,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     </form>
                     
                     <div className="mt-6 pt-4 border-t border-zinc-100 text-center">
-                        <button onClick={() => setView('client-login')} className="text-sm text-slate-400 hover:text-slate-600 hover:underline">
+                        <button onClick={() => { setView('client-login'); setIdentifier(''); setSecret(''); }} className="text-sm text-slate-400 hover:text-slate-600 hover:underline">
                             Go to Client Check-In
                         </button>
                     </div>
-                </div>
-            </Card>
-        )}
-
-        {/* --- VIEW: CLIENT LOGIN --- */}
-        {view === 'client-login' && (
-             <Card className="shadow-xl border-0 border-t-4 border-t-blue-500">
-                <div className="px-6 py-8 space-y-4">
-                     <div className="flex justify-between items-center mb-2">
-                        <h2 className="text-xl font-bold text-zinc-900">Client Check-In</h2>
-                        <button onClick={() => setView('signup')} className="text-sm text-zinc-400 font-medium hover:text-teal-600">
-                            Agent Access
-                        </button>
-                    </div>
-                    <p className="text-sm text-zinc-500 mb-4">
-                        Please enter the email and PIN provided by your bondsman to complete your check-in.
-                    </p>
-
-                    <form onSubmit={handleLogin} className="space-y-4">
-                        <div>
-                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Client Email / Case #</label>
-                        <input
-                            type="text"
-                            className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-zinc-50 focus:bg-white"
-                            placeholder="client@example.com"
-                            value={identifier}
-                            onChange={(e) => setIdentifier(e.target.value)}
-                            required
-                        />
-                        </div>
-
-                        <div>
-                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">PIN</label>
-                        <input
-                            type="password"
-                            className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none bg-zinc-50 focus:bg-white"
-                            placeholder="••••"
-                            value={secret}
-                            onChange={(e) => setSecret(e.target.value)}
-                            required
-                        />
-                        </div>
-
-                        {error && (
-                        <div className="p-3 bg-red-50 text-red-600 text-sm rounded-lg flex items-center gap-2 border border-red-100">
-                            <svg className="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                            {error}
-                        </div>
-                        )}
-
-                        <Button fullWidth className="h-12 text-base shadow-lg shadow-blue-500/20 bg-blue-600 hover:bg-blue-700 font-bold" disabled={loading}>
-                        {loading ? 'Verifying...' : 'Login to Check-In'}
-                        </Button>
-                    </form>
                 </div>
             </Card>
         )}

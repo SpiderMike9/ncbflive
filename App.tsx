@@ -48,13 +48,16 @@ const App: React.FC = () => {
     setIsAuthenticated(true);
     if (name) setUserName(name);
     
-    if (userRole === UserRole.CLIENT && userId) {
-      setActiveClientId(userId);
-      const client = getClientById(userId);
+    // HARD ROLE CHECK - Prevents leaks immediately upon login
+    if (userRole === UserRole.CLIENT) {
+      if (userId) setActiveClientId(userId);
+      const client = userId ? getClientById(userId) : null;
       if (client?.language) setClientLang(client.language);
-      setView('dashboard');
-    } else if (userRole === UserRole.AGENT || userRole === UserRole.TRIAL_AGENT) {
-      // ADMIN BYPASS: MichaelJones skips pricing and gets Ultimate plan immediately.
+      
+      // Force Client View State
+      setView('dashboard'); // This 'dashboard' refers to Client Mobile Dashboard context
+    } else {
+      // Agent Logic
       if (userId === 'MichaelJones') {
           setSubscription({
             tier: 'Ultimate',
@@ -68,16 +71,28 @@ const App: React.FC = () => {
           return;
       }
 
-      // Default Flow for New Trial Agents or Agents
       if (!subscription) {
-          // If they are a Trial Agent from sign up, auto-assign Standard Trial
           if (userRole === UserRole.TRIAL_AGENT) {
              handlePlanSelection('Standard');
           } else {
-             setView('pricing');
+             const defaultTrial: Subscription = {
+                tier: 'Standard',
+                status: 'Trial',
+                startDate: new Date().toISOString(),
+                trialEndDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+                aiMinutesUsed: 0,
+                aiMinutesCap: 30,
+                maxUsers: 1
+             };
+             setSubscription(defaultTrial);
+             setView('dashboard');
           }
       } else {
-          setView('dashboard');
+         if (subscription.status === 'Expired') {
+             setView('pricing');
+         } else {
+             setView('dashboard');
+         }
       }
     }
   };
@@ -110,16 +125,98 @@ const App: React.FC = () => {
     setView('skiptrace');
   };
 
-  // Login View
+  // 1. Authentication Guard
   if (!isAuthenticated) {
     return <LoginScreen onLoginSuccess={handleLoginSuccess} />;
   }
-  
-  // Pricing Gateway
-  if ((role === UserRole.AGENT) && view === 'pricing') {
+
+  // 2. Client Role Guard (HARD SEPARATION)
+  // If role is Client, we return the Mobile Client App structure immediately.
+  // The Agent Dashboard code is unreachable in this branch.
+  if (role === UserRole.CLIENT) {
+      return (
+        <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
+            <nav className="bg-white border-b border-slate-200 sticky top-0 z-50">
+                <div className="max-w-md mx-auto px-4 py-3 flex justify-between items-center">
+                    <span className="font-bold text-lg text-slate-800">NC BondFlow</span>
+                    <div className="flex items-center gap-3">
+                        <button 
+                            onClick={() => setClientLang(prev => prev === 'en' ? 'es' : 'en')}
+                            className="text-sm font-medium text-slate-500"
+                        >
+                            {clientLang === 'en' ? '🇪🇸' : '🇺🇸'}
+                        </button>
+                        <button onClick={handleLogout} className="text-xs text-red-500 font-medium">Log Out</button>
+                    </div>
+                </div>
+            </nav>
+            <main className="flex-1 w-full max-w-md mx-auto p-4">
+                {view === 'checkin' ? (
+                    <div>
+                        <button 
+                        onClick={() => setView('dashboard')}
+                        className="mb-4 text-slate-500 hover:text-slate-800 flex items-center gap-1 text-sm font-medium"
+                        >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
+                        {clientLang === 'en' ? 'Back' : 'Atrás'}
+                        </button>
+                        {activeClientId && (
+                        <GeoCheckIn 
+                            clientId={activeClientId} 
+                            lang={clientLang}
+                            onComplete={() => setView('dashboard')}
+                        />
+                        )}
+                    </div>
+                ) : (
+                    <div className="space-y-6 animate-fadeIn">
+                        <div className="text-center mb-8 mt-4">
+                        <h2 className="text-2xl font-bold text-slate-900">
+                            {clientLang === 'en' ? `Welcome, ${userName}` : `Bienvenido, ${userName}`}
+                        </h2>
+                        <p className="text-slate-500 mt-1">
+                            {clientLang === 'en' ? 'Next Court Date:' : 'Próxima Corte:'} <span className="font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Oct 24, 2023</span>
+                        </p>
+                        </div>
+
+                        <div 
+                        className="bg-blue-600 rounded-xl p-6 text-white shadow-lg shadow-blue-500/30 cursor-pointer transform transition hover:scale-[1.02]"
+                        onClick={() => setView('checkin')}
+                        >
+                        <div className="flex items-center justify-between">
+                            <div>
+                            <h3 className="text-lg font-bold mb-1">{clientLang === 'en' ? 'Check-In Now' : 'Registrarse Ahora'}</h3>
+                            <p className="text-blue-100 text-sm opacity-90">{clientLang === 'en' ? 'Due Today' : 'Vence Hoy'}</p>
+                            </div>
+                            <div className="bg-white/20 p-3 rounded-full">
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                            </div>
+                        </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <p className="text-slate-400 text-xs uppercase font-bold mb-1 tracking-wider">{clientLang === 'en' ? 'Balance' : 'Saldo'}</p>
+                            <p className="text-xl font-bold text-slate-900">$450.00</p>
+                        </div>
+                        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <p className="text-slate-400 text-xs uppercase font-bold mb-1 tracking-wider">{clientLang === 'en' ? 'Status' : 'Estado'}</p>
+                            <p className="text-xl font-bold text-green-600">Active</p>
+                        </div>
+                        </div>
+                    </div>
+                )}
+            </main>
+        </div>
+      );
+  }
+
+  // 3. Agent Pricing Guard
+  if ((role === UserRole.AGENT || role === UserRole.TRIAL_AGENT) && view === 'pricing') {
       return <PricingScreen onSelectPlan={handlePlanSelection} />;
   }
 
+  // 4. Standard Agent Layout (Only reachable if Role != CLIENT)
   return (
     <div className="min-h-screen bg-zinc-50 text-zinc-900 font-sans flex flex-col">
       {/* Top Navigation Bar - Professional Light Gray */}
@@ -133,7 +230,7 @@ const App: React.FC = () => {
               <div>
                 <span className="font-bold text-xl tracking-tight text-zinc-900">NC BondFlow</span>
                 <span className="ml-2 text-[10px] font-bold bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded uppercase tracking-wide">
-                  {role === UserRole.CLIENT ? 'Client App' : 'Agent Portal'}
+                  Agent Portal
                 </span>
               </div>
             </div>
@@ -148,15 +245,6 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4">
-              {role === UserRole.CLIENT && (
-                <button 
-                  onClick={() => setClientLang(prev => prev === 'en' ? 'es' : 'en')}
-                  className="text-sm font-medium text-zinc-600 hover:text-teal-600 transition-colors"
-                >
-                  {clientLang === 'en' ? '🇪🇸 Español' : '🇺🇸 English'}
-                </button>
-              )}
-              
               <button 
                 onClick={handleLogout}
                 className="px-4 py-1.5 rounded-full text-xs font-bold bg-white border border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
@@ -168,7 +256,7 @@ const App: React.FC = () => {
         </div>
       </nav>
       
-      {/* Trial Banner */}
+      {/* Trial Banner - Only for Agents */}
       {(role === UserRole.AGENT || role === UserRole.TRIAL_AGENT) && subscription?.status === 'Trial' && (
         <div className="bg-teal-600 text-white px-4 py-2 text-sm font-medium text-center relative shadow-md z-40">
             <p>
@@ -183,8 +271,7 @@ const App: React.FC = () => {
       )}
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
-        {role === UserRole.AGENT || role === UserRole.TRIAL_AGENT ? (
-          view === 'intake' ? (
+          {view === 'intake' ? (
             <NewCaseIntake 
               onCancel={() => setView('dashboard')} 
               onComplete={() => { setView('dashboard'); alert('Case Created Successfully'); }}
@@ -294,67 +381,7 @@ const App: React.FC = () => {
                 <AgentAI />
               </div>
             </div>
-          )
-        ) : (
-          /* Client Mobile View */
-          <div className="max-w-md mx-auto animate-fadeIn">
-            {view === 'dashboard' ? (
-              <div className="space-y-6">
-                <div className="text-center mb-8">
-                  <h2 className="text-2xl font-bold text-zinc-900">
-                    {clientLang === 'en' ? 'Welcome' : 'Bienvenido'}
-                  </h2>
-                  <p className="text-zinc-500 mt-1">
-                    {clientLang === 'en' ? 'Next Court Date:' : 'Próxima Corte:'} <span className="font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded">Oct 24, 2023</span>
-                  </p>
-                </div>
-
-                <div 
-                  className="bg-teal-600 rounded-xl p-6 text-white shadow-lg shadow-teal-500/30 cursor-pointer transform transition hover:scale-[1.02]"
-                  onClick={() => setView('checkin')}
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="text-lg font-bold mb-1">{clientLang === 'en' ? 'Check-In Now' : 'Registrarse Ahora'}</h3>
-                      <p className="text-teal-100 text-sm opacity-90">{clientLang === 'en' ? 'Due Today' : 'Vence Hoy'}</p>
-                    </div>
-                    <div className="bg-white/20 p-3 rounded-full">
-                       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm text-center">
-                    <p className="text-zinc-400 text-xs uppercase font-bold mb-1 tracking-wider">{clientLang === 'en' ? 'Balance' : 'Saldo'}</p>
-                    <p className="text-xl font-bold text-zinc-900">$450.00</p>
-                  </div>
-                  <div className="bg-white p-4 rounded-xl border border-zinc-200 shadow-sm text-center">
-                    <p className="text-zinc-400 text-xs uppercase font-bold mb-1 tracking-wider">{clientLang === 'en' ? 'Status' : 'Estado'}</p>
-                    <p className="text-xl font-bold text-green-600">Active</p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div>
-                <button 
-                  onClick={() => setView('dashboard')}
-                  className="mb-4 text-zinc-500 hover:text-zinc-800 flex items-center gap-1 text-sm font-medium"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-                  {clientLang === 'en' ? 'Back' : 'Atrás'}
-                </button>
-                {activeClientId && (
-                  <GeoCheckIn 
-                    clientId={activeClientId} 
-                    lang={clientLang}
-                    onComplete={() => setView('dashboard')}
-                  />
-                )}
-              </div>
-            )}
-          </div>
-        )}
+          )}
       </main>
 
       <footer className="bg-white border-t border-zinc-200 py-6 mt-auto print:hidden">

@@ -54,6 +54,22 @@ let MOCK_CLIENTS: Client[] = [
     addressHistory: [
         { address: '456 Oak Blvd, Charlotte, NC', dateAdded: '2023-03-20T14:30:00Z', isCurrent: true, source: 'Intake' }
     ]
+  },
+  // --- MANDATORY TEST USER ---
+  {
+    id: 'client_test',
+    name: 'Test Client User',
+    phone: '(555) 000-0000',
+    email: 'client_test_user', // Username from requirements
+    language: 'en',
+    balance: 0,
+    nextCourtDate: new Date().toISOString(),
+    courtLocation: 'Test Court',
+    caseNumber: 'TEST-CASE-001',
+    photoUrl: 'https://via.placeholder.com/150',
+    pin: '1234', // Password updated to 1234
+    address: 'Test Address',
+    addressHistory: []
   }
 ];
 
@@ -248,7 +264,8 @@ export const authenticateUser = (type: UserRole | string, id: string, secret: st
     // Client Login
     const client = MOCK_CLIENTS.find(c => c.email === id || c.caseNumber === id || c.id === id);
     if (client && client.pin === secret) {
-      return client;
+      // Force return the user with the CLIENT role to ensure router logic works
+      return { ...client, role: UserRole.CLIENT };
     }
     return null;
   }
