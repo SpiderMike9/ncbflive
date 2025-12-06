@@ -12,9 +12,10 @@ interface AgentDashboardProps {
   onAuthorityHub: () => void;
   onQuickUpload: () => void;
   onInterpreter: () => void;
+  onSocial: () => void;
 }
 
-export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onNewCase, onSkipTrace, onAuthorityHub, onQuickUpload, onInterpreter }) => {
+export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onNewCase, onSkipTrace, onAuthorityHub, onQuickUpload, onInterpreter, onSocial }) => {
   const stats = getStats();
   const allCases = getCases();
   const [caseSearch, setCaseSearch] = useState('');
@@ -121,7 +122,7 @@ export const AgentDashboard: React.FC<AgentDashboardProps> = ({ onNewCase, onSki
                 </div>
             </div>
             <div className="flex flex-col justify-center items-end">
-                <Button variant="outline" className="text-xs h-8">Manage Connections</Button>
+                <Button variant="outline" className="text-xs h-8" onClick={onSocial}>Manage Connections</Button>
             </div>
         </div>
       </div>

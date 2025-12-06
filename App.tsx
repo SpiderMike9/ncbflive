@@ -7,6 +7,7 @@ import { SkipTraceHub } from './components/agent/SkipTraceHub';
 import { AuthorityHub } from './components/agent/AuthorityHub';
 import { QuickDocumentUpload } from './components/agent/QuickDocumentUpload';
 import { Interpreter } from './components/agent/Interpreter';
+import { SocialMediaManager } from './components/agent/SocialMediaManager';
 import { GeoCheckIn } from './components/client/GeoCheckIn';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { PricingScreen } from './components/auth/PricingScreen';
@@ -14,17 +15,25 @@ import { UserRole, CheckInLog, Subscription, SubscriptionTier } from './types';
 import { getCheckIns, getClientById } from './services/mockDb';
 
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [role, setRole] = useState<UserRole | null>(null);
+  // DEBUG MODE: Default to Authenticated Agent
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [role, setRole] = useState<UserRole | null>(UserRole.AGENT);
   const [clientLang, setClientLang] = useState<'en' | 'es'>('en');
-  const [userName, setUserName] = useState<string>('Agent Smith');
+  const [userName, setUserName] = useState<string>('Admin (Debug Mode)');
   
-  // Subscription State
-  const [subscription, setSubscription] = useState<Subscription | null>(null);
+  // Subscription State - Default to Ultimate for Debug
+  const [subscription, setSubscription] = useState<Subscription | null>({
+    tier: 'Ultimate',
+    status: 'Active',
+    startDate: new Date().toISOString(),
+    aiMinutesUsed: 0,
+    aiMinutesCap: -1,
+    maxUsers: 999
+  });
 
   // Client View State
   const [activeClientId, setActiveClientId] = useState<string | undefined>(undefined);
-  const [view, setView] = useState<'checkin' | 'dashboard' | 'intake' | 'skiptrace' | 'authority' | 'upload' | 'interpreter' | 'pricing'>('dashboard');
+  const [view, setView] = useState<'checkin' | 'dashboard' | 'intake' | 'skiptrace' | 'authority' | 'upload' | 'interpreter' | 'social' | 'pricing'>('dashboard');
   
   // For Skip Trace view, we need to know which client we are looking at
   const [selectedCaseClientId, setSelectedCaseClientId] = useState<string | undefined>(undefined);
@@ -71,11 +80,11 @@ const App: React.FC = () => {
           return;
       }
 
-      if (!subscription) {
-          if (userRole === UserRole.TRIAL_AGENT) {
-             handlePlanSelection('Standard');
-          } else {
-             const defaultTrial: Subscription = {
+      // Check if subscription exists (it might be null if coming from logout)
+      setSubscription(prev => {
+          if (prev) return prev;
+          // Assign Default Trial if none exists
+           return {
                 tier: 'Standard',
                 status: 'Trial',
                 startDate: new Date().toISOString(),
@@ -84,16 +93,10 @@ const App: React.FC = () => {
                 aiMinutesCap: 30,
                 maxUsers: 1
              };
-             setSubscription(defaultTrial);
-             setView('dashboard');
-          }
-      } else {
-         if (subscription.status === 'Expired') {
-             setView('pricing');
-         } else {
-             setView('dashboard');
-         }
-      }
+      });
+      
+      // If view was stuck on checkin (from client), reset to dashboard
+      setView('dashboard');
     }
   };
 
@@ -131,8 +134,6 @@ const App: React.FC = () => {
   }
 
   // 2. Client Role Guard (HARD SEPARATION)
-  // If role is Client, we return the Mobile Client App structure immediately.
-  // The Agent Dashboard code is unreachable in this branch.
   if (role === UserRole.CLIENT) {
       return (
         <div className="min-h-screen bg-slate-50 text-slate-900 font-sans flex flex-col">
@@ -146,6 +147,15 @@ const App: React.FC = () => {
                         >
                             {clientLang === 'en' ? '🇪🇸' : '🇺🇸'}
                         </button>
+                        
+                        {/* DEBUG SWITCHER */}
+                        <button 
+                             onClick={() => handleLoginSuccess(UserRole.AGENT, 'admin', 'Admin (Debug Mode)')}
+                             className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold border border-purple-200"
+                        >
+                            Switch to Agent
+                        </button>
+
                         <button onClick={handleLogout} className="text-xs text-red-500 font-medium">Log Out</button>
                     </div>
                 </div>
@@ -245,6 +255,15 @@ const App: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-4">
+              
+              {/* DEBUG SWITCHER */}
+              <button 
+                    onClick={() => handleLoginSuccess(UserRole.CLIENT, 'client_test', 'Test Client')}
+                    className="hidden md:block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded hover:bg-purple-200 border border-purple-300"
+              >
+                Switch to Client
+              </button>
+
               <button 
                 onClick={handleLogout}
                 className="px-4 py-1.5 rounded-full text-xs font-bold bg-white border border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm"
@@ -270,6 +289,11 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Debug Mode Banner */}
+      <div className="bg-red-500 text-white text-[10px] font-bold text-center py-1 uppercase tracking-widest">
+        Debug Mode Active - Login Bypassed
+      </div>
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
           {view === 'intake' ? (
             <NewCaseIntake 
@@ -290,6 +314,8 @@ const App: React.FC = () => {
             />
           ) : view === 'interpreter' ? (
             <Interpreter onBack={() => setView('dashboard')} subscription={subscription} />
+          ) : view === 'social' ? (
+            <SocialMediaManager onBack={() => setView('dashboard')} />
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
               <div className="lg:col-span-2 space-y-8">
@@ -310,6 +336,7 @@ const App: React.FC = () => {
                     onAuthorityHub={() => setView('authority')}
                     onQuickUpload={() => setView('upload')}
                     onInterpreter={() => setView('interpreter')}
+                    onSocial={() => setView('social')}
                  />
                  
                  <div className="bg-white rounded-xl border border-zinc-200 shadow-sm overflow-hidden border-t-4 border-t-teal-500">

@@ -154,3 +154,15 @@ export interface AgentStats {
   ftaCount: number;
   checkInsDueToday: number;
 }
+
+// Social Media Types
+export type SocialPlatform = 'Facebook' | 'X' | 'TikTok';
+
+export interface SocialConnection {
+    id: string;
+    platform: SocialPlatform;
+    isConnected: boolean;
+    username?: string;
+    lastSync?: string;
+    avatarUrl?: string;
+}

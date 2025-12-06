@@ -166,6 +166,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                             Agent / Bondsman Login
                         </button>
                     </div>
+
+                    {/* DEBUG BUTTON */}
+                    <div className="mt-2 text-center">
+                         <button onClick={() => onLoginSuccess(UserRole.CLIENT, 'client_test', 'Test Client')} className="text-[10px] text-purple-400 font-mono hover:text-purple-600">
+                             [DEBUG] Quick Client Login
+                         </button>
+                    </div>
                 </Card>
             </div>
         </div>
@@ -349,6 +356,13 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                         <button onClick={() => { setView('client-login'); setIdentifier(''); setSecret(''); }} className="text-sm text-slate-400 hover:text-slate-600 hover:underline">
                             Go to Client Check-In
                         </button>
+                    </div>
+
+                    {/* DEBUG BUTTON */}
+                    <div className="mt-2 text-center">
+                         <button onClick={() => onLoginSuccess(UserRole.AGENT, 'admin', 'Agent Smith')} className="text-[10px] text-teal-400 font-mono hover:text-teal-600">
+                             [DEBUG] Quick Admin Login
+                         </button>
                     </div>
                 </div>
             </Card>

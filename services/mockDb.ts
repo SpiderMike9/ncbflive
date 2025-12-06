@@ -1,5 +1,5 @@
 
-import { Client, CaseFile, CheckInLog, CaseStatus, SkipTraceLogEntry, AuthorityContact, CommunicationLogEntry, CaseDocument, UserRole } from '../types';
+import { Client, CaseFile, CheckInLog, CaseStatus, SkipTraceLogEntry, AuthorityContact, CommunicationLogEntry, CaseDocument, UserRole, SocialConnection } from '../types';
 
 // Seed Data
 let MOCK_CLIENTS: Client[] = [
@@ -136,6 +136,12 @@ let MOCK_CHECKINS: CheckInLog[] = [
 
 let MOCK_SKIPTRACE_LOGS: SkipTraceLogEntry[] = [];
 
+let MOCK_SOCIAL_CONNECTIONS: SocialConnection[] = [
+    { id: 'fb', platform: 'Facebook', isConnected: true, username: 'NCBondFlow Official', lastSync: new Date().toISOString() },
+    { id: 'x', platform: 'X', isConnected: false },
+    { id: 'tt', platform: 'TikTok', isConnected: false }
+];
+
 // Mock Authority Data
 const MOCK_AUTHORITIES: AuthorityContact[] = [
   {
@@ -229,6 +235,22 @@ export const getSkipTraceLogs = (clientId: string): SkipTraceLogEntry[] => {
 
 export const addSkipTraceLog = (entry: SkipTraceLogEntry) => {
   MOCK_SKIPTRACE_LOGS.unshift(entry);
+};
+
+// --- SOCIAL MEDIA MANAGEMENT ---
+
+export const getSocialConnections = (): SocialConnection[] => {
+    return MOCK_SOCIAL_CONNECTIONS;
+};
+
+export const toggleSocialConnection = (platform: string, isConnected: boolean, username?: string) => {
+    const conn = MOCK_SOCIAL_CONNECTIONS.find(c => c.platform === platform);
+    if (conn) {
+        conn.isConnected = isConnected;
+        if (isConnected && username) conn.username = username;
+        if (isConnected) conn.lastSync = new Date().toISOString();
+        else conn.username = undefined;
+    }
 };
 
 // --- AUTHENTICATION & USER MANAGEMENT ---

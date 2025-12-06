@@ -110,3 +110,38 @@ export const translateText = async (text: string, targetLang: 'es' | 'en' | stri
     return "[Translation Failed]";
   }
 };
+
+export const generateSocialPost = async (platform: string, topic: string): Promise<string> => {
+  try {
+    const model = 'gemini-2.5-flash';
+    let constraints = '';
+    
+    switch(platform) {
+        case 'X':
+            constraints = 'Under 280 characters, use 2-3 relevant hashtags, concise and punchy.';
+            break;
+        case 'TikTok':
+            constraints = 'Draft a short video script caption, engaging, trending, use emojis and viral hashtags.';
+            break;
+        case 'Facebook':
+            constraints = 'Professional yet engaging tone, suitable for local community business page, include call to action.';
+            break;
+    }
+
+    const prompt = `Draft a social media post for a Bail Bond Agency on ${platform}.
+    Topic: ${topic}
+    Constraints: ${constraints}
+    
+    Output ONLY the post content.`;
+
+    const response = await ai.models.generateContent({
+      model: model,
+      contents: prompt,
+    });
+
+    return response.text || "";
+  } catch (error) {
+    console.error("Gemini Social Gen Error:", error);
+    return `Error drafting content for ${topic}.`;
+  }
+};
