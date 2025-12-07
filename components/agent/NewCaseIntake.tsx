@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
@@ -89,12 +88,15 @@ export const NewCaseIntake: React.FC<NewCaseIntakeProps> = ({ onCancel, onComple
   useEffect(() => {
     if (!window.google) {
       const script = document.createElement('script');
-      const apiKey = process.env.GOOGLE_MAPS_API_KEY || '';
-      script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.async = true;
-      script.defer = true;
-      document.head.appendChild(script);
-      script.onload = initAutocomplete;
+      // Safety check for browser env
+      const apiKey = (typeof process !== 'undefined' && process.env?.GOOGLE_MAPS_API_KEY) || '';
+      if (apiKey) {
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        document.head.appendChild(script);
+        script.onload = initAutocomplete;
+      }
     } else {
       initAutocomplete();
     }
@@ -272,18 +274,18 @@ export const NewCaseIntake: React.FC<NewCaseIntakeProps> = ({ onCancel, onComple
   return (
     <Card className="max-w-4xl mx-auto" title="New Case Intake">
       {/* Progress Bar */}
-      <div className="flex items-center justify-between mb-8 px-4">
+      <div className="flex items-center justify-between mb-8 px-2 md:px-4">
         {[
-          { num: 1, title: 'Defendant Info' },
+          { num: 1, title: 'Defendant' },
           { num: 2, title: 'Indemnitor' },
           { num: 3, title: 'Financials' },
         ].map((s) => (
           <div key={s.num} className={`flex items-center gap-2 ${step >= s.num ? 'text-teal-600' : 'text-zinc-300'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${step >= s.num ? 'border-teal-600 bg-teal-50' : 'border-zinc-300'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 flex-shrink-0 ${step >= s.num ? 'border-teal-600 bg-teal-50' : 'border-zinc-300'}`}>
               {s.num}
             </div>
-            <span className="font-semibold hidden sm:inline">{s.title}</span>
-            {s.num !== 3 && <div className={`h-0.5 w-12 sm:w-24 ml-2 ${step > s.num ? 'bg-teal-600' : 'bg-zinc-200'}`} />}
+            <span className="font-semibold hidden sm:inline text-sm">{s.title}</span>
+            {s.num !== 3 && <div className={`h-0.5 w-8 sm:w-24 ml-2 ${step > s.num ? 'bg-teal-600' : 'bg-zinc-200'}`} />}
           </div>
         ))}
       </div>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
@@ -17,6 +16,9 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
   const [payments, setPayments] = useState<PaymentRecord[]>(getPayments());
   const [logs, setLogs] = useState<SystemLog[]>(getSystemLogs());
   const [media, setMedia] = useState<AgentMedia[]>(getAgentMedia());
+  
+  // Mobile Sidebar Toggle
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Edit State
   const [editingAgent, setEditingAgent] = useState<AgentProfile | null>(null);
@@ -65,22 +67,22 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
 
   const DashboardView = () => (
       <div className="space-y-6 animate-fadeIn">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <Card noPadding className="border-l-4 border-blue-600 p-4">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Total Agents</p>
-                  <p className="text-3xl font-bold text-slate-800">{agents.length}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase truncate">Total Agents</p>
+                  <p className="text-2xl md:text-3xl font-bold text-slate-800">{agents.length}</p>
               </Card>
               <Card noPadding className="border-l-4 border-green-600 p-4">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Monthly Revenue</p>
-                  <p className="text-3xl font-bold text-slate-800">${payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase truncate">Mo. Revenue</p>
+                  <p className="text-2xl md:text-3xl font-bold text-slate-800">${payments.reduce((sum, p) => sum + p.amount, 0).toLocaleString()}</p>
               </Card>
               <Card noPadding className="border-l-4 border-purple-600 p-4">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Media Uploads</p>
-                  <p className="text-3xl font-bold text-slate-800">{media.length}</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase truncate">Media</p>
+                  <p className="text-2xl md:text-3xl font-bold text-slate-800">{media.length}</p>
               </Card>
               <Card noPadding className="border-l-4 border-orange-600 p-4">
-                  <p className="text-xs font-bold text-slate-400 uppercase">System Alerts</p>
-                  <p className="text-3xl font-bold text-slate-800">0</p>
+                  <p className="text-xs font-bold text-slate-400 uppercase truncate">Alerts</p>
+                  <p className="text-2xl md:text-3xl font-bold text-slate-800">0</p>
               </Card>
           </div>
 
@@ -100,7 +102,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
                       {logs.map(log => (
                           <div key={log.id} className="text-xs p-2 border-b border-slate-100">
                               <span className="font-bold text-slate-700">[{new Date(log.timestamp).toLocaleTimeString()}]</span>
-                              <span className="ml-2 text-slate-600">{log.details}</span>
+                              <span className="ml-2 text-slate-600 block sm:inline">{log.details}</span>
                           </div>
                       ))}
                   </div>
@@ -132,7 +134,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
                       </div>
                       <div className="md:col-span-2 border-t border-slate-200 pt-4 mt-2">
                           <h4 className="text-sm font-bold text-slate-800 mb-2">API Configuration (Super Admin Override)</h4>
-                          <div className="grid grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                   <label className="text-xs font-bold text-slate-500">Gemini API Key</label>
                                   <input type="password" className="w-full p-2 border border-slate-300 rounded font-mono text-sm" value={editingAgent.geminiApiKey} onChange={e => setEditingAgent({...editingAgent, geminiApiKey: e.target.value})} />
@@ -144,36 +146,38 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
                           </div>
                       </div>
                   </div>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex flex-col sm:flex-row justify-end gap-2">
                       <Button variant="outline" onClick={() => setEditingAgent(null)}>Cancel</Button>
                       <Button onClick={handleSaveAgent} className="bg-green-600 hover:bg-green-700">Save Changes</Button>
                   </div>
               </Card>
           ) : (
             <div className="bg-white rounded-lg shadow border border-slate-200 overflow-hidden">
-                <table className="w-full text-sm text-left">
-                    <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
-                        <tr>
-                            <th className="p-4">Agent Name</th>
-                            <th className="p-4">Business</th>
-                            <th className="p-4">Status</th>
-                            <th className="p-4 text-right">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-100">
-                        {agents.map(agent => (
-                            <tr key={agent.id} className="hover:bg-slate-50">
-                                <td className="p-4 font-medium text-slate-900">{agent.fullName}<br/><span className="text-slate-500 text-xs font-normal">{agent.email}</span></td>
-                                <td className="p-4 text-slate-600">{agent.businessName}</td>
-                                <td className="p-4"><span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">Active</span></td>
-                                <td className="p-4 text-right flex justify-end gap-2">
-                                    <Button variant="outline" className="h-8 text-xs px-2" onClick={() => handleEditAgent(agent)}>Edit Profile</Button>
-                                    <Button variant="danger" className="h-8 text-xs px-2" onClick={() => handleDeleteAgent(agent.id)}>Delete</Button>
-                                </td>
+                <div className="overflow-x-auto">
+                    <table className="w-full text-sm text-left">
+                        <thead className="bg-slate-50 text-slate-500 uppercase font-bold text-xs">
+                            <tr>
+                                <th className="p-4">Agent Name</th>
+                                <th className="p-4 hidden sm:table-cell">Business</th>
+                                <th className="p-4">Status</th>
+                                <th className="p-4 text-right">Actions</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {agents.map(agent => (
+                                <tr key={agent.id} className="hover:bg-slate-50">
+                                    <td className="p-4 font-medium text-slate-900">{agent.fullName}<br/><span className="text-slate-500 text-xs font-normal sm:hidden">{agent.email}</span></td>
+                                    <td className="p-4 text-slate-600 hidden sm:table-cell">{agent.businessName}</td>
+                                    <td className="p-4"><span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-bold">Active</span></td>
+                                    <td className="p-4 text-right flex flex-col sm:flex-row justify-end gap-2">
+                                        <Button variant="outline" className="h-8 text-xs px-2" onClick={() => handleEditAgent(agent)}>Edit</Button>
+                                        <Button variant="danger" className="h-8 text-xs px-2" onClick={() => handleDeleteAgent(agent.id)}>Del</Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
             </div>
           )}
       </div>
@@ -258,6 +262,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
               </Card>
 
               <Card title="Recent Transactions" className="lg:col-span-2">
+                <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
                       <thead className="bg-slate-50 text-slate-500 uppercase text-xs">
                           <tr><th>ID</th><th>Agent</th><th>Method</th><th>Amount</th><th>Status</th></tr>
@@ -277,6 +282,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
                           })}
                       </tbody>
                   </table>
+                </div>
               </Card>
           </div>
       );
@@ -285,7 +291,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
   const MediaView = () => (
       <div className="animate-fadeIn">
           <div className="bg-white p-4 rounded-lg shadow border border-slate-200 mb-6 flex justify-between items-center">
-              <h2 className="text-lg font-bold text-slate-800">Global Media Manager ({media.length} Files)</h2>
+              <h2 className="text-lg font-bold text-slate-800">Media ({media.length})</h2>
               <Button variant="danger" className="text-xs" onClick={() => { if(confirm("Nuke all media?")) { alert("Simulated: All media deleted."); setMedia([]); } }}>Delete All</Button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
@@ -308,14 +314,28 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
 
   return (
     <div className="min-h-screen bg-slate-100 font-sans flex flex-col md:flex-row">
+       {/* Mobile Header */}
+       <div className="md:hidden bg-slate-900 text-white p-4 flex justify-between items-center sticky top-0 z-50">
+           <div className="font-bold text-lg">BondFlow Admin</div>
+           <button onClick={() => setSidebarOpen(!sidebarOpen)} className="p-2 bg-slate-800 rounded">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {sidebarOpen ? (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    ) : (
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                    )}
+                </svg>
+           </button>
+       </div>
+
        {/* Sidebar */}
-       <aside className="w-full md:w-64 bg-slate-900 text-white flex flex-col h-auto md:h-screen sticky top-0">
-           <div className="p-6 border-b border-slate-800">
+       <aside className={`w-full md:w-64 bg-slate-900 text-white flex flex-col h-auto md:h-screen fixed md:sticky top-16 md:top-0 z-40 transition-all duration-300 ${sidebarOpen ? 'block' : 'hidden md:flex'}`}>
+           <div className="p-6 border-b border-slate-800 hidden md:block">
                <h1 className="text-xl font-bold tracking-tight">BondFlow Admin</h1>
                <p className="text-xs text-slate-400 mt-1">Super User: Michael Jones</p>
            </div>
            
-           <nav className="flex-1 p-4 space-y-2">
+           <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                {[
                    { id: 'dashboard', label: 'Dashboard Overview', icon: 'M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z' },
                    { id: 'agents', label: 'Agent Management', icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z' },
@@ -326,7 +346,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
                ].map(item => (
                    <button 
                       key={item.id}
-                      onClick={() => setActiveView(item.id as any)}
+                      onClick={() => { setActiveView(item.id as any); setSidebarOpen(false); }}
                       className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${activeView === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
                    >
                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} /></svg>
@@ -344,9 +364,9 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
        </aside>
 
        {/* Main Content Area */}
-       <main className="flex-1 flex flex-col h-screen overflow-hidden">
-           {/* Top Nav */}
-           <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 shadow-sm">
+       <main className="flex-1 flex flex-col h-screen overflow-hidden w-full">
+           {/* Top Nav (Desktop) */}
+           <header className="hidden md:flex h-16 bg-white border-b border-slate-200 items-center justify-between px-6 shadow-sm">
                <div className="flex items-center gap-2 text-sm text-slate-500">
                    <span className="font-bold text-slate-800">Admin Portal</span>
                    <span>/</span>
@@ -359,7 +379,7 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
            </header>
 
            {/* Scrollable Content */}
-           <div className="flex-1 overflow-y-auto p-6 bg-slate-100">
+           <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-slate-100 w-full">
                {activeView === 'dashboard' && <DashboardView />}
                {activeView === 'agents' && <AgentsView />}
                {activeView === 'finance' && <FinanceView />}
@@ -385,13 +405,6 @@ export const AdminPortal: React.FC<{ onLogout: () => void }> = ({ onLogout }) =>
                    </Card>
                )}
            </div>
-
-           {/* Bottom Nav (Action Bar) */}
-           <footer className="h-14 bg-white border-t border-slate-200 px-6 flex items-center justify-between shrink-0">
-               <Button variant="outline" className="text-xs h-8" onClick={() => alert("Previous")}>Previous Section</Button>
-               <span className="text-xs text-slate-400 font-mono">v2.4.0-ADMIN-BUILD</span>
-               <Button variant="primary" className="text-xs h-8 bg-slate-900 text-white" onClick={() => alert("Next")}>Next Section</Button>
-           </footer>
        </main>
     </div>
   );

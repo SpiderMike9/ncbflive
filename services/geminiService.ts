@@ -1,6 +1,15 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+// Safe access to API Key for browser environments
+const getApiKey = () => {
+  if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+    return process.env.API_KEY;
+  }
+  // Fallback or empty string to prevent constructor crash, requests will just fail gracefully
+  return 'mock-key-for-ui-render'; 
+};
+
+const ai = new GoogleGenAI({ apiKey: getApiKey() });
 
 // --- DOCUMENT DRAFTER ---
 export const generateLegalDoc = async (docType: string, clientName: string, county: string, extraDetails: string) => {

@@ -1,14 +1,13 @@
-
 import React, { useState, useEffect } from 'react';
 import { AgentDashboard } from './components/agent/AgentDashboard';
 import { NewCaseIntake } from './components/agent/NewCaseIntake';
 import { SkipTraceHub } from './components/agent/SkipTraceHub';
 import { AuthorityHub } from './components/agent/AuthorityHub';
 import { QuickDocumentUpload } from './components/agent/QuickDocumentUpload';
-import { SocialMediaManager } from './components/agent/SocialMediaManager'; // Keeps legacy ref if needed, but replaced by MarketingHub mostly
+import { SocialMediaManager } from './components/agent/SocialMediaManager'; 
 import { MarketingHub } from './components/agent/MarketingHub';
 import { AgentProfilePortal } from './components/agent/AgentProfile';
-import { AdminPortal } from './components/admin/AdminPortal'; // NEW IMPORT
+import { AdminPortal } from './components/admin/AdminPortal'; 
 import { GeoCheckIn } from './components/client/GeoCheckIn';
 import { LoginScreen } from './components/auth/LoginScreen';
 import { PricingScreen } from './components/auth/PricingScreen';
@@ -41,6 +40,9 @@ const App: React.FC = () => {
   
   const [selectedCaseClientId, setSelectedCaseClientId] = useState<string | undefined>(undefined);
   const [checkIns, setCheckIns] = useState<CheckInLog[]>([]);
+
+  // Mobile Nav State
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     setCheckIns(getCheckIns());
@@ -100,6 +102,7 @@ const App: React.FC = () => {
     setView('dashboard');
     setSubscription(null);
     setUserName('Agent Smith');
+    setMobileMenuOpen(false);
   };
 
   const handleLaunchSkipTrace = (clientId: string) => {
@@ -128,7 +131,7 @@ const App: React.FC = () => {
                         <button onClick={() => setClientLang(prev => prev === 'en' ? 'es' : 'en')} className="text-sm font-medium text-slate-500">
                             {clientLang === 'en' ? '🇪🇸' : '🇺🇸'}
                         </button>
-                        <button onClick={() => handleLoginSuccess(UserRole.AGENT, 'admin', 'Admin (Debug Mode)')} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold border border-purple-200">
+                        <button onClick={() => handleLoginSuccess(UserRole.AGENT, 'admin', 'Admin (Debug Mode)')} className="hidden md:block text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded font-bold border border-purple-200">
                             Switch to Agent
                         </button>
                         <button onClick={handleLogout} className="text-xs text-red-500 font-medium">Log Out</button>
@@ -196,22 +199,57 @@ const App: React.FC = () => {
               <div className="bg-teal-600 p-2 rounded-lg shadow-sm">
                 <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
               </div>
-              <div>
+              <div className="flex flex-col">
                 <span className="font-bold text-xl tracking-tight text-zinc-900">NC BondFlow</span>
-                <span className="ml-2 text-[10px] font-bold bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded uppercase tracking-wide">Agent Portal</span>
+                <span className="text-[10px] font-bold bg-zinc-200 text-zinc-600 px-2 py-0.5 rounded uppercase tracking-wide w-fit">Agent Portal</span>
               </div>
             </div>
             
-            <div className="flex items-center gap-4">
-              <button onClick={() => handleLoginSuccess(UserRole.CLIENT, 'client_test', 'Test Client')} className="hidden md:block px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded hover:bg-purple-200 border border-purple-300">
+            {/* Desktop Nav */}
+            <div className="hidden md:flex items-center gap-4">
+              <button onClick={() => handleLoginSuccess(UserRole.CLIENT, 'client_test', 'Test Client')} className="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded hover:bg-purple-200 border border-purple-300">
                 Switch to Client
               </button>
               <button onClick={handleLogout} className="px-4 py-1.5 rounded-full text-xs font-bold bg-white border border-zinc-300 text-zinc-600 hover:bg-zinc-50 hover:text-red-600 hover:border-red-200 transition-all shadow-sm">
                 Log Out
               </button>
             </div>
+
+            {/* Mobile Nav Button */}
+            <div className="md:hidden">
+                <button onClick={() => setMobileMenuOpen(!mobileMenuOpen)} className="p-2 text-zinc-500 hover:text-zinc-800">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        {mobileMenuOpen ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                        )}
+                    </svg>
+                </button>
+            </div>
           </div>
         </div>
+        
+        {/* Mobile Menu Dropdown */}
+        {mobileMenuOpen && (
+            <div className="md:hidden bg-white border-t border-zinc-200 p-4 space-y-3 animate-fadeIn shadow-lg">
+                <div className="text-sm font-medium text-zinc-500 pb-2 border-b border-zinc-100">
+                    Signed in as {userName}
+                </div>
+                <button onClick={() => { setView('dashboard'); setMobileMenuOpen(false); }} className="w-full text-left py-2 px-3 rounded hover:bg-zinc-50 font-medium">
+                    Dashboard
+                </button>
+                <button onClick={() => { setView('profile'); setMobileMenuOpen(false); }} className="w-full text-left py-2 px-3 rounded hover:bg-zinc-50 font-medium">
+                    My Profile
+                </button>
+                <button onClick={() => { handleLoginSuccess(UserRole.CLIENT, 'client_test', 'Test Client'); setMobileMenuOpen(false); }} className="w-full text-left py-2 px-3 rounded hover:bg-purple-50 text-purple-700 font-medium">
+                    Switch to Client View
+                </button>
+                <button onClick={handleLogout} className="w-full text-left py-2 px-3 rounded hover:bg-red-50 text-red-600 font-medium">
+                    Log Out
+                </button>
+            </div>
+        )}
       </nav>
       
       {/* Debug Mode Banner */}
@@ -219,7 +257,7 @@ const App: React.FC = () => {
         Debug Mode Active - Login Bypassed
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full overflow-hidden">
           {view === 'intake' ? (
             <NewCaseIntake onCancel={() => setView('dashboard')} onComplete={() => { setView('dashboard'); alert('Case Created Successfully'); }} />
           ) : view === 'skiptrace' && selectedCaseClientId ? (
@@ -229,9 +267,9 @@ const App: React.FC = () => {
           ) : view === 'upload' ? (
             <QuickDocumentUpload onComplete={() => { setView('dashboard'); alert("Saved."); }} onCancel={() => setView('dashboard')} />
           ) : view === 'poe-chat' ? (
-             <div className="h-[600px]">
+             <div className="h-[600px] flex flex-col">
                 <div className="mb-4"><Button variant="outline" onClick={() => setView('dashboard')}>Back</Button></div>
-                <GeminiChat /> 
+                <div className="flex-1"><GeminiChat /></div>
              </div>
           ) : view === 'marketing' ? (
             <MarketingHub />
@@ -240,12 +278,12 @@ const App: React.FC = () => {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-fadeIn">
               <div className="lg:col-span-2 space-y-8">
-                 <div className="flex items-center justify-between">
+                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                    <div>
                        <h1 className="text-2xl font-bold text-zinc-900">Agent Dashboard</h1>
                        <p className="text-sm text-zinc-500">Welcome back, {userName}</p>
                    </div>
-                   <div className="text-right">
+                   <div className="text-left sm:text-right">
                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-teal-100 text-teal-800 border border-teal-200">
                            {subscription?.tier} Plan
                        </span>
@@ -279,8 +317,8 @@ const App: React.FC = () => {
                                 const client = getClientById(log.clientId);
                                 return (
                                     <tr key={log.id}>
-                                        <td className="px-6 py-3 font-medium">{client?.name || 'Unknown'}</td>
-                                        <td className="px-6 py-3 text-zinc-500">{new Date(log.timestamp).toLocaleTimeString()}</td>
+                                        <td className="px-6 py-3 font-medium whitespace-nowrap">{client?.name || 'Unknown'}</td>
+                                        <td className="px-6 py-3 text-zinc-500 whitespace-nowrap">{new Date(log.timestamp).toLocaleTimeString()}</td>
                                         <td className="px-6 py-3"><span className="px-2 py-0.5 bg-green-100 text-green-800 rounded-full text-xs">Verified</span></td>
                                     </tr>
                                 );
@@ -291,7 +329,7 @@ const App: React.FC = () => {
                  </div>
               </div>
               
-              <div className="lg:col-span-1">
+              <div className="lg:col-span-1 min-h-[400px]">
                 <GeminiChat />
               </div>
             </div>
