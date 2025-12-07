@@ -72,17 +72,25 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
     setError('');
 
     setTimeout(() => {
-      const result = authenticateUser(UserRole.AGENT, identifier, secret);
+      // Universal Auth Check (includes Admin)
+      const result = authenticateUser('AGENT', identifier, secret); // Type string to allow flexibility in mockDb
+      
       if (result) {
-        if (rememberMe) {
-            localStorage.setItem('rememberedUser', identifier);
+        if (result.role === UserRole.ADMIN) {
+             // Admin Specific Flow
+             onLoginSuccess(UserRole.ADMIN, result.id, result.name);
         } else {
-            localStorage.removeItem('rememberedUser');
+             // Standard Agent Flow
+             if (rememberMe) {
+                 localStorage.setItem('rememberedUser', identifier);
+             } else {
+                 localStorage.removeItem('rememberedUser');
+             }
+             const user = result as any;
+             onLoginSuccess(user.role, user.id, user.name);
         }
-        const user = result as any;
-        onLoginSuccess(user.role, user.id, user.name);
       } else {
-        setError('Invalid agent credentials.');
+        setError('Invalid credentials.');
       }
       setLoading(false);
     }, 800);
@@ -306,7 +314,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
 
                     <form onSubmit={handleAgentLogin} className="space-y-4">
                         <div>
-                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Email</label>
+                        <label className="block text-xs font-bold text-zinc-500 uppercase mb-1">Email / Username</label>
                         <input
                             type="text"
                             className="w-full p-3 border border-zinc-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none bg-zinc-50 focus:bg-white"
@@ -359,9 +367,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLoginSuccess }) => {
                     </div>
 
                     {/* DEBUG BUTTON */}
-                    <div className="mt-2 text-center">
+                    <div className="mt-2 text-center flex justify-center gap-4">
                          <button onClick={() => onLoginSuccess(UserRole.AGENT, 'admin', 'Agent Smith')} className="text-[10px] text-teal-400 font-mono hover:text-teal-600">
-                             [DEBUG] Quick Admin Login
+                             [DEBUG] Admin Agent
+                         </button>
+                         <button onClick={() => onLoginSuccess(UserRole.ADMIN, 'MichaelJones', 'Michael Jones')} className="text-[10px] text-purple-400 font-mono hover:text-purple-600">
+                             [DEBUG] Super Admin
                          </button>
                     </div>
                 </div>
