@@ -1,10 +1,9 @@
 
-'use client';
 import React, { useState } from 'react';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { getAgentProfile, updateAgentProfile } from '@/lib/mockDb';
-import { AgentProfile } from '@/lib/types';
+import { Card } from '../ui/Card';
+import { Button } from '../ui/Button';
+import { getAgentProfile, updateAgentProfile } from '../../services/mockDb';
+import { AgentProfile } from '../../types';
 
 export const AgentProfilePortal = () => {
   const [profile, setProfile] = useState<AgentProfile>(getAgentProfile());
