@@ -1,0 +1,9 @@
+{
+  "name": "NC BondFlow",
+  "description": "A comprehensive bail bond management platform for North Carolina agencies, featuring agent dashboards and a mobile-first client check-in portal.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ]
+}
