@@ -9,7 +9,7 @@ const getApiKey = () => {
   return 'mock-key-for-ui-render'; 
 };
 
-const ai = new GoogleGenAI({ apiKey: getApiKey() });
+const ai = new GoogleGenerativeAI({ apiKey: getApiKey() });
 
 // --- DOCUMENT DRAFTER ---
 export const generateLegalDoc = async (docType: string, clientName: string, county: string, extraDetails: string) => {
