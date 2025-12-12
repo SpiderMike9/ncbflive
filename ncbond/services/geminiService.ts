@@ -1,7 +1,7 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from  "@google/generative-ai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+const ai = new GoogleGenerativeAI({ apiKey: process.env.API_KEY || '' });
 
 export const generateLegalDoc = async (docType: string, clientName: string, county: string, extraDetails: string) => {
   try {
