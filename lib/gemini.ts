@@ -8,7 +8,7 @@ let aiClient: GoogleGenAI | null = null;
 
 try {
     if (API_KEY && API_KEY !== 'mock-key') {
-        aiClient = new GoogleGenAI({ apiKey: API_KEY });
+        aiClient = new GoogleGenerativeAI ({ apiKey: API_KEY });
     }
 } catch (e) {
     console.warn("Gemini Client Init Failed", e);
