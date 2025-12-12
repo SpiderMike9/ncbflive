@@ -1,5 +1,5 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/generative-ai"
 
 // In a real Next.js app, access environment variables properly
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || 'mock-key';
