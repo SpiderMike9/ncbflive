@@ -1,4 +1,4 @@
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenerativeAI } from "@google/genai";
 
 // Safe access to API Key for browser environments
 const getApiKey = () => {
